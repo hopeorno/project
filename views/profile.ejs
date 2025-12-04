@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
+    header { background:#004d40; color:white; padding:10px; text-align:center; }
+    header nav a { color:white; margin:0 10px; text-decoration:none; font-weight:bold; }
+    h2 { text-align:center; margin-top:20px; }
+    .profile { width:80%; max-width:600px; margin:20px auto; background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .profile a { display:block; margin-top:20px; color:#004d40; text-decoration:none; font-weight:bold; text-align:center; }
+  </style>
+</head>
+<body>
+
+<%- include('header') %>
+
+<div class="profile">
+  <h2>Your Profile</h2>
+  <p><strong>Name:</strong> <%= user.username %></p>
+  <p><strong>Email:</strong> <%= user.email %></p>
+  <a href="/favorites">Edit Profile / Customize Content</a>
+</div>
+
+</body>
+</html>
