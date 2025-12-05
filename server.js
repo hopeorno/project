@@ -93,7 +93,7 @@ app.post('/signup', async(req,res)=>{
 });
 
 // Homepage
-// Homepage - accessible to everyone
+// Homepage - accessible to everyone 
 app.get('/', (req, res) => {
     // Check if user is logged in
     if (req.session.user && req.session.user.loggedin) {
@@ -119,7 +119,10 @@ app.get('/tours', checkLogin, (req,res)=> res.render('tours'));
 app.get('/contact', checkLogin, (req,res)=> res.render('contact'));
 
 // Tourist Information Page
-app.get('/about', checkLogin, (req,res)=> res.render('about'));
+app.get('/about', (req,res)=> {
+    res.render('about', { username: req.session.user ? req.session.user.username : null });
+});
+
 
 // Logout
 app.get('/logout', (req,res)=>{

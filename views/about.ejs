@@ -2,25 +2,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tourist Information</title>
+  <title>About AlUla</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:0; }
-    header { background:#004d40; color:white; padding:10px; text-align:center; }
-    header nav a { color:white; margin:0 10px; text-decoration:none; font-weight:bold; }
-    h2 { text-align:center; margin-top:20px; }
-    .info { width:80%; max-width:600px; margin:20px auto; background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    p { margin-bottom:10px; line-height:1.5; }
+    * {
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body, html {
+      height:100%;
+    }
+
+    /* الخلفية */
+    .background {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: url('https://www.vision2030.gov.sa/media/yaypdije/elephant-rock.jpg') center center / cover no-repeat;
+    }
+
+    /* Overlay لتعتيم الصورة */
+    .background::before {
+      content:"";
+      position:absolute;
+      top:0; left:0;
+      width:100%;
+      height:100%;
+      background: rgba(0,0,0,0.5); /* 0.5 = نصف شفافية */
+    }
+
+    /* محتوى الصفحة */
+    .content {
+      position: absolute;
+      top:50%;
+      left:50%;
+      transform: translate(-50%, -50%);
+      color:white;
+      text-align:center;
+      width: 80%;
+      max-width: 800px;
+    }
+
+    .content h2 {
+      font-size:3rem;
+      margin-bottom:20px;
+    }
+
+    .content p {
+      font-size:1.2rem;
+      line-height:1.6;
+    }
+
+    nav {
+      position: absolute;
+      top: 20px;
+      right: 40px;
+    }
+
+    nav a {
+      color:white;
+      margin-left: 25px;
+      text-decoration: none;
+      font-size:16px;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
 
-<%- include('header') %>
+<div class="background">
 
-<div class="info">
-  <h2>About AlUla</h2>
-  <p>AlUla is rich in heritage and culture, with historical sites such as Madaen Saleh and Elephant Rock.</p>
-  <p>Best visiting months: October – March.</p>
-  <p>Accommodation: Hotels and guesthouses in Central AlUla.</p>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/about">About Us</a>
+    <a href="/booking">Booking</a>
+    <a href="<% if (!username) { %>/login<% } else { %>/logout<% } %>">
+      <% if (!username) { %>Login<% } else { %>Logout<% } %>
+    </a>
+    <a href="/contact">Contact</a>
+  </nav>
+
+  <div class="content">
+    <h2>About AlUla</h2>
+    <p>AlUla is rich in heritage and culture, with historical sites such as Madaen Saleh and Elephant Rock.</p>
+    <p>Best visiting months: October – March.</p>
+    <p>Accommodation: Hotels and guesthouses in Central AlUla.</p>
+  </div>
+
 </div>
 
 </body>
