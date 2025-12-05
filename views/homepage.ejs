@@ -59,17 +59,20 @@
 
     /* button */
     .hero .btn {
-      position:absolute;
-      bottom:120px;
-      padding:12px 35px;
-      border:2px solid white;
-      color:white;
-      background:transparent;
-      border-radius:30px;
-      font-size:18px;
-      cursor:pointer;
-      transition:0.3s;
-    }
+  position:absolute;
+  bottom:120px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 35px;
+  border:2px solid white;
+  color:white;
+  background:transparent;
+  border-radius:30px;
+  font-size:18px;
+  cursor:pointer;
+  transition:0.3s;
+}
+
 
     .hero .btn:hover {
       background:white;
@@ -84,7 +87,7 @@
 
   <nav>
     <a href="/">Home</a>
-    <a href="/about">About Us</a>
+    <a href="/about">About</a>
     <a href="/booking">Booking</a>
      <a href="/login">Login</a>
     <a href="/Contact">Contact</a>
@@ -92,7 +95,12 @@
 
   <h3>ALULA</h3>
 
-  <button class="btn">WATCH TOUR</button>
+  <a href="/tours">
+    <button class="btn">WATCH TOUR</button>
+</a>
+
+
+  
 
 </div>
 

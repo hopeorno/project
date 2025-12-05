@@ -51,7 +51,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// ===== Middleware: Check Login =====
+// ===== Middleware: Check Login ONLY for protected pages =====
 function checkLogin(req, res, next) {
     if (req.session.user && req.session.user.loggedin) next();
     else res.redirect('/login');
@@ -108,39 +108,39 @@ app.post('/signup', async (req, res) => {
     }
 });
 
-// Homepage
+// Homepage (PUBLIC)
 app.get('/', (req, res) => {
-    res.render('homepage'); // username already available from middleware
+    res.render('homepage'); 
 });
 
-// Profile Page
-app.get('/profile', checkLogin, (req, res) => {
-    res.render('profile', { user: req.session.user });
+// Tours Page (PUBLIC)
+app.get('/tours', (req, res) => {
+    res.render('tours');
 });
 
-// Favorites Page
+// Contact Page (PUBLIC)
+app.get('/contact', (req, res) => {
+    res.render('contact');
+});
+
+// About Page (PUBLIC)
+app.get('/about', (req, res) => {
+    res.render('about');
+});
+
+// Favorites (OPTIONAL PROTECTED – remove checkLogin if you want it public)
 app.get('/favorites', checkLogin, (req, res) => {
     res.render('favorites');
 });
 
-// Booking Page
+// Booking (OPTIONAL PROTECTED)
 app.get('/booking', checkLogin, (req, res) => {
     res.render('booking');
 });
 
-// Tours Page
-app.get('/tours', checkLogin, (req, res) => {
-    res.render('tours');
-});
-
-// Contact Page
-app.get('/contact', checkLogin, (req, res) => {
-    res.render('contact');
-});
-
-// About Page (public)
-app.get('/about', (req, res) => {
-    res.render('about');
+// Profile Page (PROTECTED)
+app.get('/profile', checkLogin, (req, res) => {
+    res.render('profile', { user: req.session.user });
 });
 
 // Logout
@@ -152,4 +152,5 @@ app.get('/logout', (req, res) => {
 app.listen(3000, () =>
     console.log('Server running at http://localhost:3000')
 );
+
 
