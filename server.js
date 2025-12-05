@@ -93,8 +93,14 @@ app.post('/signup', async(req,res)=>{
 });
 
 // Homepage
-app.get('/', checkLogin, (req,res)=> {
-    res.render('homepage', { username: req.session.user.username });
+// Homepage - accessible to everyone
+app.get('/', (req, res) => {
+    // Check if user is logged in
+    if (req.session.user && req.session.user.loggedin) {
+        res.render('homepage', { username: req.session.user.username, loggedIn: true });
+    } else {
+        res.render('homepage', { username: 'Guest', loggedIn: false });
+    }
 });
 
 // Profile Page
