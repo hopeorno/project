@@ -660,67 +660,151 @@
   </section>
 
 <script>
-  const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-
-  window.addEventListener('DOMContentLoaded', () => {
-    favorites.forEach(i => {
-      const btn = document.querySelectorAll('.favorite-btn')[i];
-      if (btn) btn.classList.add('active');
+// ============================================
+// دالة اللايك للأماكن (Places)
+// ============================================
+async function toggleFavorite(event, index) {
+  event.stopPropagation();
+  
+  const places = [
+    { name: 'Hegra', date: 'UNESCO World Heritage Site', location: 'AlUla' },
+    { name: 'Maraya', date: 'Year-round', location: 'AlUla' },
+    { name: 'Elephant Rock', date: 'Year-round', location: 'AlUla' },
+    { name: 'The Oasis', date: 'Year-round', location: 'AlUla' },
+    { name: 'AlJadidah Arts District', date: 'Year-round', location: 'AlUla' }
+  ];
+  
+  const place = places[index];
+  const btn = event.currentTarget;
+  
+  try {
+    const response = await fetch('/api/toggle-like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: place.name,
+        eventDate: place.date,
+        eventLocation: place.location
+      })
     });
-  });
-
-  function toggleFavorite(event, index) {
-    event.stopPropagation();
-    const btn = event.currentTarget;
-    btn.classList.toggle('active');
-
-    const pos = favorites.indexOf(index);
-    if (pos === -1) favorites.push(index);
-    else favorites.splice(pos, 1);
-
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }
-
-  let eventFavorites = JSON.parse(localStorage.getItem("eventFavorites") || "[]");
-
-  window.addEventListener("DOMContentLoaded", () => {
-    eventFavorites.forEach(id => {
-      const btn = document.querySelector(`[data-event-id="${id}"] .event-fav`);
-      if (btn) btn.classList.add("active");
-    });
-  });
-
-  function toggleEventFavorite(e, id) {
-    e.stopPropagation();
-    const btn = e.currentTarget;
-    btn.classList.toggle("active");
-
-    if (eventFavorites.includes(id)) {
-      eventFavorites = eventFavorites.filter(x => x !== id);
-    } else {
-      eventFavorites.push(id);
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      btn.classList.toggle('active');
+      showNotification(data.message, 'success');
+    } else if (response.status === 401) {
+      localStorage.setItem('returnUrl', window.location.pathname);
+      showNotification('Please login to add favorites', 'warning');
+      setTimeout(() => window.location.href = '/login', 1500);
     }
-
-    localStorage.setItem("eventFavorites", JSON.stringify(eventFavorites));
+  } catch (err) {
+    showNotification('Connection error', 'error');
   }
+}
 
-  function goBook() {
-    window.location.href = "/booking";
-  }
-
-  function goToPlace(place) {
-    window.location.href = `/place/${place}`;
-  }
-
-  function filterEvents() {
-    const filter = document.getElementById('eventFilter').value;
-    document.querySelectorAll('.event-card').forEach(card => {
-      card.style.display =
-        filter === 'all' || card.dataset.category === filter
-        ? 'inline-block' : 'none';
+// ============================================
+// دالة اللايك للفعاليات (Events)
+// ============================================
+async function toggleEventFavorite(e, eventId) {
+  e.stopPropagation();
+  
+  const events = {
+    'elissa2025': { name: 'Elissa Concert', date: 'December 2025', location: 'AlUla' },
+    'polo2026': { name: 'AlUla Desert Polo 2026', date: '16–17 Jan 2026', location: 'AlUla' },
+    'maraya-tour': { name: 'Maraya Tour', date: 'Available year-round', location: 'AlUla' },
+    'stars': { name: 'A Magical Journey Among the Stars', date: 'Selected nights', location: 'AlUla' },
+    'balloon': { name: 'Hot Air Balloon Ride', date: 'Daily – Sunrise', location: 'AlUla' },
+    'zipline': { name: 'AlUla Zipline', date: 'Daily', location: 'AlUla' }
+  };
+  
+  const event = events[eventId];
+  const btn = e.currentTarget;
+  
+  try {
+    const response = await fetch('/api/toggle-like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: event.name,
+        eventDate: event.date,
+        eventLocation: event.location
+      })
     });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      btn.classList.toggle('active');
+      showNotification(data.message, 'success');
+    } else if (response.status === 401) {
+      localStorage.setItem('returnUrl', window.location.pathname);
+      showNotification('Please login', 'warning');
+      setTimeout(() => window.location.href = '/login', 1500);
+    }
+  } catch (err) {
+    showNotification('Error', 'error');
   }
+}
+
+// عرض الإشعارات
+function showNotification(message, type = 'success') {
+  const old = document.querySelector('.toast-notification');
+  if (old) old.remove();
+}
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  
+  const colors = {
+    success: '#4caf50',
+    error: '#f44336',
+    warning: '#ff9800'
+  };
+  
+  toast.style.cssText = `
+    position: fixed; top: 20px; right: 20px;
+    background: \${colors[type]}; color: white;
+    padding: 15px 25px; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 9999; font-weight: bold;
+    animation: slideIn 0.3s ease;
+  `;
+  
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+
+async function loadUserLikes() {
+  try {
+    const response = await fetch('/api/my-likes');
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        data.favorites.forEach(fav => {
+          document.querySelectorAll('.event-card, .slide').forEach(card => {
+            const title = card.querySelector('h3')?.textContent.trim();
+            if (title === fav.event_name) {
+              const btn = card.querySelector('.event-fav, .favorite-btn');
+              if (btn) btn.classList.add('active');
+            }
+          });
+        });
+      }
+    }
+  } catch (err) {
+    console.log('User not logged in');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadUserLikes);
 </script>
+
+<style>
+@keyframes slideIn {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+</style>
 
 </body>
 </html>

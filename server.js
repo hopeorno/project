@@ -428,20 +428,38 @@ app.get('/place/aljadidah', (req, res) => {
 
 // ===== PROTECTED PAGES =====
 
-// Profile Page (PROTECTED) - now pulls favorites from DB and passes to template
+// Profile Page (PROTECTED) - fetch favorites + bookings
 app.get('/profile', checkLogin, (req, res) => {
     const userEmail = req.session.user.email;
 
+    // جلب اللايكات
     db.all(
         "SELECT id, event_name, event_date, event_location, liked_at FROM user_favorites WHERE user_email = ? ORDER BY liked_at DESC",
         [userEmail],
-        (err, rows) => {
-            if (err) {
-                console.error('DB error profile favorites:', err);
-                // Still render profile, but with empty favorites
-                return res.render('profile', { user: req.session.user, favorites: [] });
+        (errFav, favorites) => {
+            if (errFav) {
+                console.error('DB error profile favorites:', errFav);
+                favorites = [];
             }
-            res.render('profile', { user: req.session.user, favorites: rows || [] });
+
+            // جلب الحجوزات
+            db.all(
+                "SELECT id, activity_name, booking_date, num_people, booking_status, created_at FROM user_bookings WHERE user_email = ? ORDER BY created_at DESC",
+                [userEmail],
+                (errBook, bookings) => {
+                    if (errBook) {
+                        console.error('DB error profile bookings:', errBook);
+                        bookings = [];
+                    }
+
+                    // تمرير كل البيانات للبروفايل
+                    res.render('profile', { 
+                        user: req.session.user, 
+                        favorites: favorites, 
+                        bookings: bookings 
+                    });
+                }
+            );
         }
     );
 });

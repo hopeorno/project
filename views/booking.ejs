@@ -1006,38 +1006,127 @@ function backToEvents() {
             document.getElementById('confirmBtn').disabled = !canConfirm;
         }
 
-        // Confirm booking
-        function confirmBooking() {
-            const fullName = document.getElementById('fullName').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
+       // ============================================
+// إضافة هذا الكود في نهاية ملف booking.ejs
+// استبدل دالة confirmBooking القديمة بهذه
+// ============================================
 
-            if (!fullName || !email || !phone) {
-                alert('Please fill in all your information!');
-                return;
-            }
+async function confirmBooking() {
+    const fullName = document.getElementById('fullName').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
 
-            const bookingData = {
-                event: eventData.name,
-                type: eventData.type,
-                seats: selectedSeats,
-                date: selectedDate,
-                numPeople: document.getElementById('numPeople')?.value || selectedSeats.length,
-                fullName,
-                email,
-                phone,
-                total: document.getElementById('totalPrice').textContent
-            };
+    if (!fullName || !email || !phone) {
+        showNotification('Please fill in all your information!', 'error');
+        return;
+    }
 
-            // هنا تقدر ترسل البيانات للسيرفر
-            console.log('Booking confirmed:', bookingData);
+    // جمع بيانات الحجز
+    const bookingData = {
+        activityName: eventData.name,
+        bookingDate: selectedDate || 'TBA',
+        numPeople: parseInt(document.getElementById('numPeople')?.value) || selectedSeats.length || 1,
+        fullName,
+        email,
+        phone
+    };
 
-            alert(`✅ Booking Confirmed!\n\nEvent: ${bookingData.event}\nTotal: ${bookingData.total}\n\nConfirmation email sent to ${email}`);
+    // إظهار مؤشر التحميل
+    const confirmBtn = document.getElementById('confirmBtn');
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving...';
 
-            // Clear session and redirect
-            sessionStorage.removeItem('bookingEvent');
-            window.location.href = '/';
+    try {
+        // إرسال الحجز للسيرفر
+        const response = await fetch('/api/save-booking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // نجح الحجز
+            showNotification('✅ Booking Confirmed Successfully!', 'success');
+            
+            // رسالة تأكيد
+            setTimeout(() => {
+                alert(`✅ Booking Confirmed!\n\nEvent: ${bookingData.activityName}\nDate: ${bookingData.bookingDate}\nGuests: ${bookingData.numPeople}\n\nYou can view your bookings in your profile.`);
+                
+                // إعادة التوجيه للبروفايل
+                window.location.href = '/profile';
+            }, 500);
+        } else {
+            showNotification(data.message || 'Booking failed', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = originalText;
         }
+    } catch (err) {
+        console.error('Booking error:', err);
+        showNotification('Connection error. Please try again.', 'error');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+    }
+}
+
+// ============================================
+// دالة عرض الإشعارات
+// ============================================
+function showNotification(message, type = 'success') {
+    const old = document.querySelector('.toast-notification');
+    if (old) old.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    
+    const colors = {
+        success: '#4caf50',
+        error: '#f44336',
+        warning: '#ff9800'
+    };
+    
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type] || colors.success};
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        z-index: 9999;
+        font-weight: bold;
+        font-size: 16px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// CSS للأنيميشن
+if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}
     </script>
     
 <!-- CONTACT SECTION -->
