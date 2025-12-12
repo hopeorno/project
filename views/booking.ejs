@@ -642,12 +642,15 @@
 
     <div class="hero">
         <nav>
-            <a href="/">Home</a>
-            <a href="/about">About</a>
-            <a href="#booking">Booking</a>
-            <a href="/login">Login</a>
-            <a href="/contact">Contact</a>
-        </nav>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <% if (typeof loggedIn !== 'undefined' && loggedIn) { %>
+      <a href="/profile">Profile</a>
+    <% } else { %>
+      <a href="/login">Login</a>
+    <% } %>
+    <a href="/contact">Contact</a>
+  </nav>
         <h3>ALULA EVENTS</h3>
     </div>
   <!-- Breadcrumb -->

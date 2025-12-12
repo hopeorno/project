@@ -320,6 +320,44 @@
             margin-bottom: 30px;
         }
 
+        /* Timer Section */
+        .session-timer {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.2);
+            display: none;
+        }
+
+        .session-timer.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+       
+        .session-timer h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .timer-display {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .timer-warning {
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
         .form-group {
             margin-bottom: 25px;
         }
@@ -651,6 +689,13 @@
 
         <!-- Payment Section -->
         <div class="payment-section" id="paymentSection">
+            <!-- Session Timer -->
+            <div class="session-timer" id="sessionTimer">
+                <h4>The remaning time to complete the reservation </h4>
+                <div class="timer-display" id="timerDisplay">02:00</div>
+                <p class="timer-warning">The reservation will be automatically canceled after the time expires. </p>
+            </div>
+
             <h3>Payment Information</h3>
             
             <form id="paymentForm" onsubmit="processPayment(event)">
@@ -716,6 +761,9 @@
         let bookedSeats = [];
         let selectedSeats = [];
         const SEAT_PRICE = 350;
+        let sessionTimer = null;
+        let sessionEndTime = null;
+        let timerInterval = null;
 
         // Fetch booked seats from server
         async function loadBookedSeats() {
@@ -786,6 +834,94 @@
         function showPayment() {
             document.getElementById('paymentSection').classList.add('active');
             document.getElementById('paymentSection').scrollIntoView({ behavior: 'smooth' });
+            
+            // Start 2-minute session timer
+            startSessionTimer();
+        }
+
+        // Start session timer
+        function startSessionTimer() {
+            // Clear any existing timer
+            if (sessionTimer) {
+                clearTimeout(sessionTimer);
+            }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            // Set session end time (2 minutes from now)
+            sessionEndTime = Date.now() + (2 * 60 * 1000);
+            
+            // Show timer
+            document.getElementById('sessionTimer').classList.add('active');
+            
+            // Update timer display every second
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+            
+            // Set timeout to cancel booking after 2 minutes
+            sessionTimer = setTimeout(() => {
+                cancelSession();
+            }, 2 * 60 * 1000);
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const remainingTime = sessionEndTime - Date.now();
+            
+            if (remainingTime <= 0) {
+                document.getElementById('timerDisplay').textContent = '00:00';
+                return;
+            }
+            
+            const minutes = Math.floor(remainingTime / 60000);
+            const seconds = Math.floor((remainingTime % 60000) / 1000);
+            
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Cancel session and reset
+        function cancelSession() {
+            // Clear timers
+            if (sessionTimer) {
+                clearTimeout(sessionTimer);
+            }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            // Hide timer and payment section
+            document.getElementById('sessionTimer').classList.remove('active');
+            document.getElementById('paymentSection').classList.remove('active');
+            
+            // Clear selected seats
+            selectedSeats = [];
+            
+            // Reset all seat selections in UI
+            const allSeats = document.querySelectorAll('.seat.selected');
+            allSeats.forEach(seat => {
+                seat.classList.remove('selected');
+            });
+            
+            // Update summary
+            updateSummary();
+            
+            // Show alert
+            alert('⏰ انتهى الوقت المحدد للحجز!\n\nالرجاء تحديد المقاعد مرة أخرى والمتابعة خلال دقيقتين.');
+            
+            // Scroll to seats section
+            document.querySelector('.seats-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Clear session timer
+        function clearSessionTimer() {
+            if (sessionTimer) {
+                clearTimeout(sessionTimer);
+            }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            document.getElementById('sessionTimer').classList.remove('active');
         }
 
         // Format card number
@@ -864,6 +1000,9 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    // Clear session timer
+                    clearSessionTimer();
+                    
                     // Create booking number
                     const bookingNumber = 'ALU' + result.bookingId.toString().padStart(8, '0');
                     document.getElementById('bookingNumber').textContent = bookingNumber;
@@ -883,6 +1022,9 @@
 
         // Close modal
         function closeModal() {
+            // Clear session timer if any
+            clearSessionTimer();
+            
             document.getElementById('successModal').classList.remove('active');
             window.location.href = '/';
         }
@@ -893,11 +1035,11 @@
 
 <!-- قسم الاتصال -->
 <div class="contact-section">
-  <h2>Need an expert? Leave your info and we’ll be in touch shortly</h2>
+  <h2>Need an expert? Leave your info and we'll be in touch shortly</h2>
   <div class="contact-grid">
     <div class="contact-box">
       <h3>VISIT US</h3>
-      <p>Come and visit us at our office and we’ll help you with all your needs.<br><br> Alula, Saudi Arabia</p>
+      <p>Come and visit us at our office and we'll help you with all your needs.<br><br> Alula, Saudi Arabia</p>
     </div>
     <div class="contact-box">
       <h3>CALL US</h3>

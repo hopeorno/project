@@ -416,6 +416,7 @@
     <a href="/">Home</a>
     <a href="/about">About</a>
     <a href="/booking">Booking</a>
+      <a href="/profile">Profile</a>
     <a href="/login">Login</a>
     <a href="/contact">Contact</a>
   </nav>
@@ -751,9 +752,10 @@ async function toggleEventFavorite(e, eventId) {
 function showNotification(message, type = 'success') {
   const old = document.querySelector('.toast-notification');
   if (old) old.remove();
-}
+  
   const toast = document.createElement('div');
   toast.textContent = message;
+  toast.className = 'toast-notification';
   
   const colors = {
     success: '#4caf50',
@@ -763,7 +765,7 @@ function showNotification(message, type = 'success') {
   
   toast.style.cssText = `
     position: fixed; top: 20px; right: 20px;
-    background: \${colors[type]}; color: white;
+    background: ${colors[type]}; color: white;
     padding: 15px 25px; border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     z-index: 9999; font-weight: bold;
@@ -772,6 +774,7 @@ function showNotification(message, type = 'success') {
   
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
+}
 
 async function loadUserLikes() {
   try {
@@ -795,6 +798,27 @@ async function loadUserLikes() {
   }
 }
 
+function goToPlace(place) {
+  window.location.href = `/place/${place}`;
+}
+
+function goBook() {
+  window.location.href = '/booking';
+}
+
+function filterEvents() {
+  const filter = document.getElementById('eventFilter').value;
+  const cards = document.querySelectorAll('.event-card');
+  
+  cards.forEach(card => {
+    if (filter === 'all' || card.dataset.category === filter) {
+      card.style.display = 'inline-block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', loadUserLikes);
 </script>
 
@@ -803,7 +827,6 @@ document.addEventListener('DOMContentLoaded', loadUserLikes);
   from { transform: translateX(400px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-
 </style>
 
 </body>

@@ -88,6 +88,31 @@ db.serialize(() => {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `);
+
+    // ✅ NEW: Contact messages table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS contact_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            message TEXT NOT NULL,
+            status TEXT DEFAULT 'New',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    // ✅ NEW: Hegra feedback table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS hegra_feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            comment TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id)
+        )
+    `);
 });
 
 // ===== Global Middleware =====
@@ -195,21 +220,16 @@ app.post('/signup', async (req, res) => {
 // ===== FAVORITES/LIKES API =====
 
 // Toggle like (add/remove favorite)
-// Accepts: { eventName, eventDate, eventLocation } or { eventId }
 app.post('/api/toggle-like', checkLogin, (req, res) => {
     const { eventName, eventDate, eventLocation, eventId } = req.body;
     const userEmail = req.session.user.email;
 
-    // Basic validation
     if (!eventName && !eventId) {
         return res.json({ success: false, message: 'Missing event identifier' });
     }
 
-    // If front-end sends eventId only, you can map it server-side to name/date/location.
-    // For now, prefer eventName. If eventId is present and eventName missing, use eventId as name.
     const effectiveName = eventName || eventId;
 
-    // Check if already liked
     db.get(
         "SELECT * FROM user_favorites WHERE user_email = ? AND event_name = ?",
         [userEmail, effectiveName],
@@ -239,7 +259,6 @@ app.post('/api/toggle-like', checkLogin, (req, res) => {
                     [userEmail, effectiveName, eventDate || null, eventLocation || null],
                     function(err) {
                         if (err) {
-                            // If UNIQUE constraint violated or other error
                             console.error('DB error adding favorite:', err);
                             return res.json({ success: false, message: 'Error adding favorite' });
                         }
@@ -256,14 +275,13 @@ app.get('/api/my-likes', checkLogin, (req, res) => {
     const userEmail = req.session.user.email;
 
     db.all(
-        "SELECT id, event_name as event_name, event_date as event_date, event_location as event_location, liked_at FROM user_favorites WHERE user_email = ? ORDER BY liked_at DESC",
+        "SELECT id, event_name, event_date, event_location, liked_at FROM user_favorites WHERE user_email = ? ORDER BY liked_at DESC",
         [userEmail],
         (err, rows) => {
             if (err) {
                 console.error('DB error my-likes:', err);
                 return res.json({ success: false, favorites: [] });
             }
-            // Normalize to expected keys (frontend expects event_name)
             const favorites = rows.map(r => ({
                 id: r.id,
                 event_name: r.event_name,
@@ -272,6 +290,29 @@ app.get('/api/my-likes', checkLogin, (req, res) => {
                 liked_at: r.liked_at
             }));
             res.json({ success: true, favorites });
+        }
+    );
+});
+
+// Delete favorite by ID
+app.delete('/api/unlike/:id', checkLogin, (req, res) => {
+    const favoriteId = req.params.id;
+    const userEmail = req.session.user.email;
+
+    db.run(
+        "DELETE FROM user_favorites WHERE id = ? AND user_email = ?",
+        [favoriteId, userEmail],
+        function(err) {
+            if (err) {
+                console.error('DB error deleting favorite:', err);
+                return res.json({ success: false, message: 'Error deleting favorite' });
+            }
+            
+            if (this.changes === 0) {
+                return res.json({ success: false, message: 'Favorite not found or unauthorized' });
+            }
+            
+            res.json({ success: true, message: 'Favorite removed successfully' });
         }
     );
 });
@@ -311,6 +352,331 @@ app.get('/api/my-bookings', checkLogin, (req, res) => {
             res.json({ success: true, bookings: rows });
         }
     );
+});
+
+// Cancel booking by ID
+app.delete('/api/cancel-booking/:id', checkLogin, (req, res) => {
+    const bookingId = req.params.id;
+    const userEmail = req.session.user.email;
+
+    db.run(
+        "DELETE FROM user_bookings WHERE id = ? AND user_email = ?",
+        [bookingId, userEmail],
+        function(err) {
+            if (err) {
+                console.error('DB error canceling booking:', err);
+                return res.json({ success: false, message: 'Error canceling booking' });
+            }
+            
+            if (this.changes === 0) {
+                return res.json({ success: false, message: 'Booking not found or unauthorized' });
+            }
+            
+            res.json({ success: true, message: 'Booking canceled successfully' });
+        }
+    );
+});
+
+// ===== ✅ HEGRA FEEDBACK API (NEW) =====
+
+// Get current user info (for client-side checks)
+app.get('/api/current-user', (req, res) => {
+    if (req.session.user && req.session.user.loggedin) {
+        res.json({
+            id: req.session.user.email, // Using email as unique ID
+            username: req.session.user.username,
+            email: req.session.user.email
+        });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
+// Get all Hegra feedback
+app.get('/api/feedback', (req, res) => {
+    db.all(
+        "SELECT id, user_id, username, comment, created_at FROM hegra_feedback ORDER BY created_at DESC",
+        [],
+        (err, rows) => {
+            if (err) {
+                console.error('DB error getting feedback:', err);
+                return res.status(500).json([]);
+            }
+            res.json(rows);
+        }
+    );
+});
+
+// Submit Hegra feedback
+app.post('/api/feedback', (req, res) => {
+    // Check if user is logged in
+    if (!req.session.user || !req.session.user.loggedin) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Please login to submit feedback' 
+        });
+    }
+
+    const { comment } = req.body;
+    const userEmail = req.session.user.email;
+    const username = req.session.user.username || req.session.user.firstName;
+
+    console.log('📝 Feedback submission attempt:', { userEmail, username, comment: comment?.substring(0, 50) });
+
+    if (!comment || comment.trim().length === 0) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Comment is required' 
+        });
+    }
+
+    // Check if user already submitted feedback
+    db.get(
+        "SELECT id FROM hegra_feedback WHERE user_id = ?",
+        [userEmail],
+        (err, row) => {
+            if (err) {
+                console.error('❌ DB error checking duplicate feedback:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Database error: ' + err.message 
+                });
+            }
+
+            if (row) {
+                console.log('⚠️ Duplicate feedback attempt from:', userEmail);
+                return res.status(409).json({ 
+                    success: false, 
+                    message: 'You have already submitted feedback. Thank you!' 
+                });
+            }
+
+            // Insert new feedback
+            db.run(
+                "INSERT INTO hegra_feedback (user_id, username, comment) VALUES (?, ?, ?)",
+                [userEmail, username, comment.trim()],
+                function(err) {
+                    if (err) {
+                        console.error('❌ DB error inserting feedback:', err);
+                        return res.status(500).json({ 
+                            success: false, 
+                            message: 'Failed to submit feedback: ' + err.message 
+                        });
+                    }
+
+                    console.log(`✅ New Hegra feedback from: ${username} (${userEmail})`);
+
+                    res.json({ 
+                        success: true, 
+                        message: 'Thank you for your feedback!',
+                        feedbackId: this.lastID 
+                    });
+                }
+            );
+        }
+    );
+});
+
+// Delete feedback (Admin or user's own - optional)
+app.delete('/api/feedback/:id', checkLogin, (req, res) => {
+    const feedbackId = req.params.id;
+    const userEmail = req.session.user.email;
+
+    // Allow users to delete their own feedback only
+    db.run(
+        "DELETE FROM hegra_feedback WHERE id = ? AND user_id = ?",
+        [feedbackId, userEmail],
+        function(err) {
+            if (err) {
+                console.error('DB error deleting feedback:', err);
+                return res.json({ success: false, message: 'Error deleting feedback' });
+            }
+
+            if (this.changes === 0) {
+                return res.json({ success: false, message: 'Feedback not found or unauthorized' });
+            }
+
+            res.json({ success: true, message: 'Feedback deleted successfully' });
+        }
+    );
+});
+
+// ===== ✅ CONTACT FORM API (NEW) =====
+
+// Submit contact form
+app.post('/api/contact', (req, res) => {
+    const { name, email, phone, message } = req.body;
+
+    if (!name || !email || !message) {
+        return res.json({ 
+            success: false, 
+            message: 'Please fill all required fields' 
+        });
+    }
+
+    // التحقق من صحة البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.json({ 
+            success: false, 
+            message: 'Please enter a valid email address' 
+        });
+    }
+
+    db.run(
+        `INSERT INTO contact_messages (name, email, phone, message) 
+         VALUES (?, ?, ?, ?)`,
+        [name, email, phone || null, message],
+        function(err) {
+            if (err) {
+                console.error('❌ DB error contact form:', err);
+                return res.json({ 
+                    success: false, 
+                    message: 'Failed to send message. Please try again.' 
+                });
+            }
+            
+            console.log(`✉️  New contact message from: ${name} (${email})`);
+            console.log(`📝 Message preview: ${message.substring(0, 50)}...`);
+            
+            res.json({ 
+                success: true, 
+                message: 'Message sent successfully! We will contact you soon.',
+                messageId: this.lastID 
+            });
+        }
+    );
+});
+
+// Get all contact messages (Admin only - optional)
+app.get('/api/contact-messages', checkLogin, (req, res) => {
+    // يمكنك إضافة فحص للأدمن هنا
+    // if (req.session.user.email !== 'admin@alula.com') {
+    //     return res.status(403).json({ success: false, message: 'Unauthorized' });
+    // }
+
+    db.all(
+        "SELECT * FROM contact_messages ORDER BY created_at DESC",
+        [],
+        (err, rows) => {
+            if (err) {
+                console.error('DB error getting messages:', err);
+                return res.json({ success: false, messages: [] });
+            }
+            res.json({ success: true, messages: rows, total: rows.length });
+        }
+    );
+});
+
+// Mark message as read (Admin - optional)
+app.put('/api/contact-message/:id/read', checkLogin, (req, res) => {
+    const messageId = req.params.id;
+    
+    db.run(
+        "UPDATE contact_messages SET status = 'Read' WHERE id = ?",
+        [messageId],
+        function(err) {
+            if (err) {
+                console.error('DB error updating message:', err);
+                return res.json({ success: false, message: 'Error updating message' });
+            }
+            
+            if (this.changes === 0) {
+                return res.json({ success: false, message: 'Message not found' });
+            }
+            
+            res.json({ success: true, message: 'Message marked as read' });
+        }
+    );
+});
+
+// Delete contact message (Admin - optional)
+app.delete('/api/contact-message/:id', checkLogin, (req, res) => {
+    const messageId = req.params.id;
+    
+    db.run(
+        "DELETE FROM contact_messages WHERE id = ?",
+        [messageId],
+        function(err) {
+            if (err) {
+                console.error('DB error deleting message:', err);
+                return res.json({ success: false, message: 'Error deleting message' });
+            }
+            
+            if (this.changes === 0) {
+                return res.json({ success: false, message: 'Message not found' });
+            }
+            
+            res.json({ success: true, message: 'Message deleted successfully' });
+        }
+    );
+});
+
+// ===== DELETE ACCOUNT =====
+app.delete('/api/delete-account', checkLogin, async (req, res) => {
+    const userEmail = req.session.user.email;
+
+    try {
+        // 1. حذف المفضلات
+        await new Promise((resolve, reject) => {
+            db.run(
+                "DELETE FROM user_favorites WHERE user_email = ?",
+                [userEmail],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+
+        // 2. حذف الحجوزات
+        await new Promise((resolve, reject) => {
+            db.run(
+                "DELETE FROM user_bookings WHERE user_email = ?",
+                [userEmail],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+
+        // 3. حذف حجوزات الحفلات
+        await new Promise((resolve, reject) => {
+            db.run(
+                "DELETE FROM concert_bookings WHERE email = ?",
+                [userEmail],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+
+        // 4. حذف المستخدم من جدول Users (Sequelize)
+        await User.destroy({ where: { email: userEmail } });
+
+        // 5. تدمير الجلسة
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Session destroy error:', err);
+                return res.json({ success: false, message: 'Error logging out after deletion' });
+            }
+            
+            res.json({ 
+                success: true, 
+                message: 'Account deleted successfully',
+                redirect: '/'
+            });
+        });
+
+    } catch (err) {
+        console.error('Delete account error:', err);
+        res.json({ 
+            success: false, 
+            message: 'Error deleting account: ' + err.message 
+        });
+    }
 });
 
 // ===== CONCERT BOOKING API =====
@@ -428,11 +794,10 @@ app.get('/place/aljadidah', (req, res) => {
 
 // ===== PROTECTED PAGES =====
 
-// Profile Page (PROTECTED) - fetch favorites + bookings
+// Profile Page (PROTECTED)
 app.get('/profile', checkLogin, (req, res) => {
     const userEmail = req.session.user.email;
 
-    // جلب اللايكات
     db.all(
         "SELECT id, event_name, event_date, event_location, liked_at FROM user_favorites WHERE user_email = ? ORDER BY liked_at DESC",
         [userEmail],
@@ -442,7 +807,6 @@ app.get('/profile', checkLogin, (req, res) => {
                 favorites = [];
             }
 
-            // جلب الحجوزات
             db.all(
                 "SELECT id, activity_name, booking_date, num_people, booking_status, created_at FROM user_bookings WHERE user_email = ? ORDER BY created_at DESC",
                 [userEmail],
@@ -452,7 +816,6 @@ app.get('/profile', checkLogin, (req, res) => {
                         bookings = [];
                     }
 
-                    // تمرير كل البيانات للبروفايل
                     res.render('profile', { 
                         user: req.session.user, 
                         favorites: favorites, 
@@ -577,4 +940,21 @@ app.listen(3000, () => {
     console.log('🚀 Server running at http://localhost:3000');
     console.log('📊 Database: ALULA.db (SQLite)');
     console.log('✅ All routes ready!');
+    console.log('');
+    console.log('📋 Available APIs:');
+    console.log('   Auth: /login, /signup, /logout');
+    console.log('   Favorites: /api/toggle-like, /api/my-likes, /api/unlike/:id');
+    console.log('   Bookings: /api/save-booking, /api/my-bookings, /api/cancel-booking/:id');
+    console.log('   ✉️  Contact: /api/contact, /api/contact-messages');
+    console.log('   💬 Feedback: /api/feedback (GET/POST), /api/current-user');
+    console.log('   Concert: /api/book, /api/booked-seats');
+    console.log('   Account: /api/delete-account');
+    console.log('');
+    console.log('🗃️  Database Tables:');
+    console.log('   - Users (Sequelize)');
+    console.log('   - user_favorites');
+    console.log('   - user_bookings');
+    console.log('   - concert_bookings');
+    console.log('   - ✅ contact_messages (NEW)');
+    console.log('   - ✅ hegra_feedback (NEW)');
 });

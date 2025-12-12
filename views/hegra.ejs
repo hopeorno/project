@@ -291,48 +291,6 @@
       font-size: 20px;
     }
     
-    .stars {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 20px;
-    }
-
-    .star {
-      color: #d4af37;
-      font-size: 20px;
-    }
-
-    /* Rating Input Stars */
-    .rating-input {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      align-items: center;
-    }
-
-    .rating-input label {
-      font-size: 16px;
-      color: #222;
-      font-weight: 600;
-      margin-right: 10px;
-    }
-
-    .rating-stars {
-      display: flex;
-      gap: 5px;
-    }
-
-    .rating-star {
-      font-size: 28px;
-      color: #ddd;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .rating-star:hover,
-    .rating-star.active {
-      color: #d4af37;
-    }
     .feedback-text {
       font-size: 16px;
       line-height: 1.7;
@@ -577,19 +535,9 @@
 
 
 <script>
-/*
-  Client-side feedback integration (server-aware)
-  - On load: query /api/current-user to know session state
-  - Fetch feedbacks from /api/feedback
-  - Prevent duplicate feedback by same user (client-side check)
-  - Prefer server to enforce duplicate-prevention as well (server-side must validate)
-*/
+let CURRENT_USER = null;
+let FEEDBACKS_CACHE = [];
 
-// Current state
-let CURRENT_USER = null;      // { id, username } or null
-let FEEDBACKS_CACHE = [];     // cached list from server
-
-// Get current user from server session
 async function fetchCurrentUser() {
   try {
     const res = await fetch('/api/current-user', { credentials: 'same-origin' });
@@ -607,38 +555,35 @@ async function fetchCurrentUser() {
   }
 }
 
-// Check if user is logged in (server-aware)
 function isUserLoggedIn() {
+  if (CURRENT_USER && CURRENT_USER.id) {
+    return true;
+  }
   const token = localStorage.getItem('userToken');
   const userData = localStorage.getItem('userData');
   return token !== null && userData !== null;
 }
-// Keep legacy getter in case other code relies on it (not primary auth)
+
 function getCurrentUserLocal() {
+  if (CURRENT_USER) return CURRENT_USER;
   const userData = localStorage.getItem('userData');
   return userData ? JSON.parse(userData) : null;
 }
 
-// Store current page URL before redirecting to login
 function redirectToLogin() {
-  // Save the current page URL so we can return here after login
   localStorage.setItem('returnUrl', window.location.href);
-  // Prefer server login route
   window.location.href = '/login';
 }
 
-// Check if user just logged in and should be returned to this page
 function checkReturnFromLogin() {
   const returnUrl = localStorage.getItem('returnUrl');
   if (returnUrl && returnUrl === window.location.href) {
     localStorage.removeItem('returnUrl');
-    // Scroll to feedback section
     const el = document.getElementById('feedback-input-section');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   }
 }
 
-// Fetch feedback from database
 async function fetchFeedback() {
   try {
     const response = await fetch('/api/feedback', { credentials: 'same-origin' });
@@ -656,7 +601,6 @@ async function fetchFeedback() {
   }
 }
 
-// Display feedback in cards
 function displayFeedback(feedbacks) {
   const feedbackList = document.getElementById('feedback-list');
   feedbackList.innerHTML = '';
@@ -672,15 +616,11 @@ function displayFeedback(feedbacks) {
   });
 }
 
-// Create feedback card element
 function createFeedbackCard(feedback) {
   const card = document.createElement('div');
   card.className = 'feedback-card';
   
-  // Get first letter of username for avatar
   const initial = feedback.username ? feedback.username.charAt(0).toUpperCase() : 'U';
-  
-  // Create stars (static 5-star display)
   const stars = '<div class="stars">' + '★'.repeat(5).split('').map(s => `<span class="star">${s}</span>`).join('') + '</div>';
   
   card.innerHTML = `
@@ -698,13 +638,14 @@ function createFeedbackCard(feedback) {
   return card;
 }
 
-// Submit new feedback
 async function submitFeedback() {
-  // Ensure we have server session state
+  console.log('🔍 التحقق من تسجيل الدخول...');
+  
   if (!isUserLoggedIn()) {
-    // Try fetching current user once more before showing prompt (edge case)
+    console.log('⚠️ المستخدم غير مسجل، محاولة الحصول على البيانات من السيرفر...');
     await fetchCurrentUser();
     if (!isUserLoggedIn()) {
+      console.log('❌ المستخدم غير مسجل دخول');
       showLoginPrompt();
       return;
     }
@@ -712,67 +653,89 @@ async function submitFeedback() {
   
   const feedbackInput = document.getElementById('feedback-input');
   if (!feedbackInput) {
-    // Input may be replaced by login prompt
+    console.log('❌ حقل الإدخال غير موجود');
     showLoginPrompt();
     return;
   }
+  
   const feedbackText = feedbackInput.value.trim();
+  console.log('📝 النص المدخل:', feedbackText);
   
   if (!feedbackText) {
-    alert('Please write your feedback before submitting!');
+    alert('الرجاء كتابة رأيك قبل الإرسال!');
     return;
   }
   
-  // Client-side duplicate prevention: check if current user already posted
+  const currentUser = getCurrentUserLocal();
+  console.log('👤 بيانات المستخدم:', currentUser);
+  
+  if (!currentUser || !currentUser.email) {
+    alert('حدث خطأ في تحديد المستخدم. الرجاء تسجيل الدخول مرة أخرى.');
+    redirectToLogin();
+    return;
+  }
+  
+  const userIdentifier = currentUser.email || currentUser.id;
   const alreadyPosted = FEEDBACKS_CACHE.some(f => {
-    // user_id may be number or string — normalize
-    if (!f.user_id || !CURRENT_USER) return false;
-    return String(f.user_id) === String(CURRENT_USER.id);
+    if (!f.user_id) return false;
+    return String(f.user_id) === String(userIdentifier);
   });
   
   if (alreadyPosted) {
-    alert('You have already submitted feedback. Thank you!');
+    alert('لقد قمت بإرسال رأيك مسبقاً. شكراً لك!');
     return;
   }
   
   try {
-    // POST to server. Prefer server to derive user from session; pass only comment.
+    console.log('📤 إرسال البيانات إلى السيرفر...');
+    
+    const dataToSend = {
+      comment: feedbackText
+    };
+    console.log('📦 البيانات المرسلة:', dataToSend);
+    
     const response = await fetch('/api/feedback', {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        comment: feedbackText
-        // DO NOT send user_id from client as authoritative — server should attach user from session.
-      })
+      body: JSON.stringify(dataToSend)
     });
     
+    console.log('📡 حالة الاستجابة:', response.status);
+    
     if (!response.ok) {
-      // If server returns 409 for duplicate, show message
+      const errorText = await response.text();
+      console.log('❌ رسالة الخطأ:', errorText);
+      
       if (response.status === 409) {
-        const payload = await response.json().catch(()=>({message:'Duplicate'}));
-        alert(payload.message || 'You have already submitted feedback.');
-        // Refresh feedback to reflect real state
-        fetchFeedback();
+        alert('لقد قمت بإرسال رأيك مسبقاً.');
+        await fetchFeedback();
         return;
       }
-      throw new Error('Failed to submit feedback');
+      if (response.status === 401) {
+        alert('انتهت جلستك. الرجاء تسجيل الدخول مرة أخرى.');
+        redirectToLogin();
+        return;
+      }
+      throw new Error(`Server error: ${response.status}`);
     }
     
-    // Success: clear input and refresh list
+    const result = await response.json();
+    console.log('✅ استجابة السيرفر:', result);
+    
     feedbackInput.value = '';
-    alert('Thank you for your feedback!');
+    alert('شكراً لك على مشاركة رأيك! ✅');
     await fetchFeedback();
+    console.log('✅ تم الإرسال بنجاح!');
     
   } catch (error) {
-    console.error('Error submitting feedback:', error);
-    alert('Failed to submit feedback. Please try again.');
+    console.error('❌ خطأ في الإرسال:', error);
+    alert('حدث خطأ في إرسال رأيك. الرجاء المحاولة مرة أخرى.');
   }
 }
 
-// Show login prompt if user is not logged in
 function showLoginPrompt() {
   const inputSection = document.getElementById('feedback-input-section');
   inputSection.innerHTML = `
@@ -783,7 +746,6 @@ function showLoginPrompt() {
   `;
 }
 
-// Restore the feedback input UI when user is logged in
 function restoreFeedbackInput() {
   const inputSection = document.getElementById('feedback-input-section');
   inputSection.innerHTML = `
@@ -793,7 +755,6 @@ function restoreFeedbackInput() {
   `;
 }
 
-// Toggle view all feedback
 function toggleViewAll() {
   const feedbackList = document.getElementById('feedback-list');
   const btn = document.getElementById('view-all-btn');
@@ -807,14 +768,12 @@ function toggleViewAll() {
   }
 }
 
-// Helper function to escape HTML
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-// Helper function to format date
 function formatDate(dateString) {
   if (!dateString) return 'Recently';
   const date = new Date(dateString);
@@ -829,7 +788,6 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-// Display sample feedback for demonstration
 function displaySampleFeedback() {
   const sampleData = [
     {
@@ -853,27 +811,20 @@ function displaySampleFeedback() {
   displayFeedback(sampleData);
 }
 
-// Open map in new window
 function openMap() {
   window.open('https://www.google.com/maps/place/Hegra,+AlUla,+Saudi+Arabia', '_blank');
 }
 
-// Initialize on page load
 window.onload = async function() {
-  // Step 0: handle returnFromLogin UX (scroll)
   checkReturnFromLogin();
-
-  // Step 1: fetch server session user
   await fetchCurrentUser();
-
-  // Step 2: render appropriate input UI
+  
   if (!isUserLoggedIn()) {
     showLoginPrompt();
   } else {
     restoreFeedbackInput();
   }
-
-  // Step 3: fetch and display feedbacks
+  
   await fetchFeedback();
 };
 </script>
