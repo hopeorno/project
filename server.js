@@ -24,7 +24,11 @@ app.use(session({
     name: 'sessionId',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 }
+    cookie: { 
+        maxAge: 1000 * 60 * 60,
+        httpOnly: true,
+        sameSite: 'lax'  // ✅ إضافة هذا
+    }
 }));
 
 // ===== Database (SQLite) =====
