@@ -12,26 +12,46 @@
         }
 
         /* Navigation Bar */
+        /* top nav */
         nav {
-          position: absolute;
-          top: 25px;
-          right: 40px;
-          z-index: 1000;
+            position: absolute;
+            top:15px;
+            right: 40px;
+            z-index: 10;
         }
 
         nav a {
-          color: white;
-          margin-left: 25px;
-          text-decoration: none;
-          font-size: 16px;
-          font-weight: bold;
-          transition: color 0.3s;
-        }
-        
-        nav a:hover { 
-          color: #d4af37;
+            color: white;
+            margin-left: 25px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            transition: color 0.3s;
         }
 
+        nav a:hover {
+            color: #d4af37;
+        }
+
+        nav a.profile-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            transition: all 0.3s;
+        }
+
+        nav a.profile-icon:hover {
+            transform: scale(1.1);
+        }
+
+        nav a.profile-icon svg {
+            transition: all 0.3s;
+        }
+
+        nav a.profile-icon:hover svg {
+            stroke: #d4af37;
+        }
         .hero {
           position: relative;
         }
@@ -560,16 +580,19 @@
 <body>
 
     <!-- Navigation -->
-    <div class="hero">
-        <h1>ALULA EVENTS</h1>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/about">About</a>
-            <a href="/booking">Booking</a>
-            <a href="/login">Login</a>
-            <a href="/contact">Contact</a>
-        </nav>
-    </div>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/booking">Booking</a>
+        <a href="/login">Login</a>
+        <a href="/contact">Contact</a>
+        <a href="/profile" class="profile-icon" title="Profile">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        </a>
+    </nav>
 
     <!-- Hero Image -->
     <div class="hero-section"></div>
