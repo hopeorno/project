@@ -21,6 +21,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // ===== PostgreSQL Session Store =====
 const PgSession = connectPgSimple(session);
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 app.use(
     session({
