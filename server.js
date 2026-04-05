@@ -940,25 +940,7 @@ app.use((req, res) => {
 });
 
 // ===== Start Server =====
-app.listen(3000, () => {
-    console.log('🚀 Server running at http://localhost:3000');
-    console.log('📊 Database: ALULA.db (SQLite)');
-    console.log('✅ All routes ready!');
-    console.log('');
-    console.log('📋 Available APIs:');
-    console.log('   Auth: /login, /signup, /logout');
-    console.log('   Favorites: /api/toggle-like, /api/my-likes, /api/unlike/:id');
-    console.log('   Bookings: /api/save-booking, /api/my-bookings, /api/cancel-booking/:id');
-    console.log('   ✉️  Contact: /api/contact, /api/contact-messages');
-    console.log('   💬 Feedback: /api/feedback (GET/POST), /api/current-user');
-    console.log('   Concert: /api/book, /api/booked-seats');
-    console.log('   Account: /api/delete-account');
-    console.log('');
-    console.log('🗃️  Database Tables:');
-    console.log('   - Users (Sequelize)');
-    console.log('   - user_favorites');
-    console.log('   - user_bookings');
-    console.log('   - concert_bookings');
-    console.log('   - ✅ contact_messages (NEW)');
-    console.log('   - ✅ hegra_feedback (NEW)');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running");
 });

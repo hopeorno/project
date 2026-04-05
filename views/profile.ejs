@@ -7,6 +7,7 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; font-family:Arial,sans-serif; }
     body { background: linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%); min-height:100vh; color:#fff; }
+    
     nav {
       position:fixed;
       top:25px;
@@ -24,14 +25,83 @@
     }
 
     nav a:hover { opacity:0.7; }
-    .profile-container { max-width:900px; margin:50px auto; background:rgba(44,44,44,0.95); border-radius:15px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
-    .profile-header { background: linear-gradient(135deg,#d4af37 0%,#b8941f 100%); padding:40px; text-align:center; color:#1a1a1a; }
-    .profile-avatar { width:100px; height:100px; border-radius:50%; background:#1a1a1a; display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto 20px; border:4px solid #fff; }
-    .profile-header h2 { font-size:28px; margin-bottom:5px; }
-    .profile-header p { font-size:14px; opacity:0.8; }
+    
+   /* .profile-container { 
+      max-width:900px; 
+      margin:100px auto 50px; 
+      background:rgba(0,0,0,0.03);
+      border-radius:15px;
+      overflow:hidden;
+      box-shadow:0 8px 32px rgba(0,0,0,0.3);
+    }*/
+    
+    .profile-header { 
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background: url('https://s7g10.scene7.com/is/image/rcu/DSC00446-Desktop-Hero-28801x1620?$Responsive$&fit=stretch&fmt=webp&wid=1920') 
+        center center / cover no-repeat;
+    }
+    
+    .profile-info-section {
+      padding: 80px 40px 40px;
+      position: relative;
+    }
+    
+    .profile-avatar { 
+      width:120px; 
+      height:120px; 
+      border-radius:50%;
+      background:#1a1a1a; 
+      display:flex; 
+      align-items:center;
+      justify-content:center; 
+      font-size:50px; 
+      border:5px solid #2c2c2c;
+      position: absolute;
+      top: -60px;
+      left: 40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .profile-name-section {
+      padding-left: 0;
+    }
+    
+    .profile-name-section h2 { 
+      font-size:28px; 
+      margin-bottom:8px;
+      color: #fff;
+      font-weight: bold;
+    }
+    
+    .profile-name-section p { 
+      font-size:15px; 
+      opacity:0.7;
+      color: #ccc;
+    }
 
-    .tabs { display:flex; background:rgba(26,26,26,0.8); border-bottom:1px solid rgba(212,175,55,0.3); }
-    .tab { flex:1; padding:20px; text-align:center; cursor:pointer; border:none; background:transparent; color:#ccc; font-size:16px; transition:all 0.3s; position:relative; }
+    .tabs { 
+      display:flex; 
+      background:rgba(26,26,26,0.8); 
+      border-bottom:1px solid rgba(212,175,55,0.3); 
+      margin-top: 20px; 
+    }
+    
+    .tab { 
+      flex:1; 
+      padding:18px; 
+      text-align:center; 
+      cursor:pointer; 
+      border:none; 
+      background:transparent; 
+      color:#ccc; 
+      font-size:15px; 
+      transition:all 0.3s; 
+      position:relative; 
+      font-weight: 500; 
+    }
+    
     .tab:hover { color:#d4af37; background:rgba(212,175,55,0.1); }
     .tab.active { color:#d4af37; background:rgba(212,175,55,0.15); }
     .tab.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:#d4af37; }
@@ -50,7 +120,7 @@
     .form-group input { width:100%; padding:12px; background: rgba(26,26,26,0.5); border:1px solid rgba(212,175,55,0.3); border-radius:5px; color:#fff; font-size:14px; transition:border-color 0.3s; }
     .form-group input:focus { outline:none; border-color:#d4af37; }
 
-    .btn { padding:12px 30px; background:#d4af37; color:#1a1a1a; border:none; border-radius:5px; cursor:pointer; font-size:14px; font-weight:bold; transition: all 0.3s; }
+    .btn { padding:12px 30px; background:#d4af37; color:#1a1a1a; border:none; border-radius:5px; cursor:pointer; font-size:14px; font-weight:bold; transition: all 0.3s; text-decoration:none; display:inline-block; }
     .btn:hover { background:#b8941f; transform:translateY(-2px); box-shadow:0 4px 12px rgba(212,175,55,0.3); }
 
     .btn-delete { padding:8px 20px; background:#f44336; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:13px; font-weight:bold; transition:all 0.3s; }
@@ -112,41 +182,52 @@
       color: #ccc;
       line-height: 1.6;
     }
+    
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
   </style>
 </head>
 <body>
 <nav>
     <a href="/">Home</a>
     <a href="/about">About</a>
-      <% if (typeof loggedIn !== 'undefined' && loggedIn) { %>
+    <% if (typeof loggedIn !== 'undefined' && loggedIn) { %>
       <a href="/booking">Booking</a>
     <% } else { %>
       <a href="/login">Login</a>
     <% } %>
     <a href="/tours">Tours</a>
     <a href="/contact">Contact</a>
-     <a href="/profile" class="profile-icon" title="Profile">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-        </a>
-  </nav>
-
+    <a href="/profile" class="profile-icon" title="Profile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </a>
+</nav>
 
 <div class="profile-container">
-
-  <div class="profile-header">
+  <div class="profile-header"></div>
+  
+  <div class="profile-info-section">
     <div class="profile-avatar"><%= user.firstName.charAt(0).toUpperCase()+user.lastName.charAt(0).toUpperCase() %></div>
-    <h2><%= user.firstName %> <%= user.lastName %></h2>
-    <p><%= user.email %></p>
+    <div class="profile-name-section">
+      <h2><%= user.firstName %> <%= user.lastName %></h2>
+      <p><%= user.email %></p>
+    </div>
   </div>
 
   <div class="tabs">
     <button class="tab active" onclick="openTab('info')">My Information</button>
     <button class="tab" onclick="openTab('settings')">Settings</button>
-    <button class="tab" onclick="openTab('favorites')">My Favorites ❤️</button>
-    <button class="tab" onclick="openTab('bookings')">My Bookings 📅</button>
+    <button class="tab" onclick="openTab('favorites')">My Favorites </button>
+    <button class="tab" onclick="openTab('bookings')">My Bookings </button>
   </div>
 
   <!-- My Info -->
@@ -172,7 +253,6 @@
       <button type="submit" class="btn">Save Changes</button>
     </form>
     
-    <!-- Delete Account Section -->
     <div class="delete-account-section">
       <div class="warning-box">
         <h4>⚠️ Danger Zone</h4>
@@ -184,7 +264,7 @@
 
   <!-- Favorites -->
   <div id="favorites" class="tab-content">
-    <h3 style="color:#d4af37; margin-bottom:20px;">My Favorite Events ❤️</h3>
+    <h3 style="color:#d4af37; margin-bottom:20px;">My Favorite Events </h3>
     <div id="favoritesLoading" class="loading">Loading your favorites...</div>
     <div id="favoritesList"></div>
   </div>
@@ -196,15 +276,28 @@
     <div id="bookingsList"></div>
     <div style="text-align:center; margin-top:30px;"><a href="/booking" class="btn">Book New Tour</a></div>
   </div>
+</div>
 
+<!-- CONTACT SECTION -->
+<div class="contact-section">
+  <h2>Need an expert? Leave your info and we'll be in touch shortly</h2>
+  <div class="contact-grid">
+    <div class="contact-box">
+      <h3>VISIT US</h3>
+      <p>Come and visit us at our office and we'll help you with all your needs.<br><br> Alula, Saudi Arabia</p>
+    </div>
+    <div class="contact-box">
+      <h3>CALL US</h3>
+      <p>Feel free to give us a call, we are here to help you.<br><br>+966 55 555 555</p>
+    </div>
+    <div class="contact-box">
+      <h3>CONTACT US</h3>
+      <p>You can also contact us via email or our contact form.<br><br>alula@sa.com</p>
+    </div>
+  </div>
 </div>
 
 <script>
-// ============================================
-// COMPLETE PROFILE.EJS SCRIPT SECTION - FIXED
-// ============================================
-
-// Tab Functions
 function openTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -215,7 +308,6 @@ function openTab(tabName) {
   if (tabName === 'bookings') loadBookings();
 }
 
-// Update Profile
 document.getElementById('updateForm').addEventListener('submit', async e => {
   e.preventDefault();
   const formData = new FormData(e.target);
@@ -237,7 +329,7 @@ document.getElementById('updateForm').addEventListener('submit', async e => {
       messageDiv.className = 'message success';
       messageDiv.textContent = result.message;
       
-      document.querySelector('.profile-header h2').textContent = data.firstName + ' ' + data.lastName;
+      document.querySelector('.profile-name-section h2').textContent = data.firstName + ' ' + data.lastName;
       document.querySelector('.profile-avatar').textContent = 
         data.firstName.charAt(0).toUpperCase() + data.lastName.charAt(0).toUpperCase();
       
@@ -256,9 +348,6 @@ document.getElementById('updateForm').addEventListener('submit', async e => {
   }
 });
 
-// ============================================
-// Load Favorites
-// ============================================
 async function loadFavorites() {
   const loading = document.getElementById('favoritesLoading');
   const list = document.getElementById('favoritesList');
@@ -267,9 +356,7 @@ async function loadFavorites() {
   list.innerHTML = '';
   
   try {
-    const res = await fetch('/api/my-likes', {
-      credentials: 'same-origin'
-    });
+    const res = await fetch('/api/my-likes', { credentials: 'same-origin' });
     const data = await res.json();
     
     loading.style.display = 'none';
@@ -285,9 +372,7 @@ async function loadFavorites() {
             <p><strong>Location:</strong> ${fav.event_location || 'AlUla'}</p>
             <p style="font-size: 12px; color: #999; margin-top: 10px;">
               Liked on: ${new Date(fav.liked_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
+                year: 'numeric', month: 'short', day: 'numeric'
               })}
             </p>
           </div>
@@ -304,22 +389,16 @@ async function loadFavorites() {
           <div style="font-size: 60px; margin-bottom: 20px;">💔</div>
           <h3 style="color: #999;">No favorites yet</h3>
           <p>Start exploring and like events!</p>
-          <a href="/tours" class="btn" style="margin-top: 20px; display: inline-block; text-decoration: none;">
-            Browse Events
-          </a>
+          <a href="/tours" class="btn" style="margin-top: 20px;">Browse Events</a>
         </div>
       `;
     }
   } catch (err) {
-    console.error('Load favorites error:', err);
     loading.style.display = 'none';
     list.innerHTML = `<div class="empty-state"><p style="color: #f44336;">Error loading favorites</p></div>`;
   }
 }
 
-// ============================================
-// Load Bookings
-// ============================================
 async function loadBookings() {
   const loading = document.getElementById('bookingsLoading');
   const list = document.getElementById('bookingsList');
@@ -328,9 +407,7 @@ async function loadBookings() {
   list.innerHTML = '';
   
   try {
-    const res = await fetch('/api/my-bookings', {
-      credentials: 'same-origin'
-    });
+    const res = await fetch('/api/my-bookings', { credentials: 'same-origin' });
     const data = await res.json();
     
     loading.style.display = 'none';
@@ -339,7 +416,6 @@ async function loadBookings() {
       data.bookings.forEach(booking => {
         const card = document.createElement('div');
         card.className = 'event-card';
-        
         const statusClass = booking.booking_status.toLowerCase();
         
         card.innerHTML = `
@@ -348,15 +424,11 @@ async function loadBookings() {
             <p><strong>Date:</strong> ${booking.booking_date}</p>
             <p><strong>Guests:</strong> ${booking.num_people} ${booking.num_people > 1 ? 'People' : 'Person'}</p>
             <p><strong>Status:</strong> 
-              <span class="status-badge status-${statusClass}">
-                ${booking.booking_status}
-              </span>
+              <span class="status-badge status-${statusClass}">${booking.booking_status}</span>
             </p>
             <p style="font-size: 12px; color: #999; margin-top: 10px;">
               Booked on: ${new Date(booking.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
+                year: 'numeric', month: 'short', day: 'numeric'
               })}
             </p>
           </div>
@@ -373,49 +445,27 @@ async function loadBookings() {
           <div style="font-size: 60px; margin-bottom: 20px;">📅</div>
           <h3 style="color: #999;">No bookings yet</h3>
           <p>Book your first tour!</p>
-          <a href="/tours" class="btn" style="margin-top: 20px; display: inline-block; text-decoration: none;">
-            Browse Tours
-          </a>
+          <a href="/tours" class="btn" style="margin-top: 20px;">Browse Tours</a>
         </div>
       `;
     }
   } catch (err) {
-    console.error('Load bookings error:', err);
     loading.style.display = 'none';
     list.innerHTML = `<div class="empty-state"><p style="color: #f44336;">Error loading bookings</p></div>`;
   }
 }
 
-// ============================================
-// Remove Favorite - FIXED
-// ============================================
 async function removeFavorite(favoriteId) {
-  if (!confirm('Are you sure you want to remove this event from your favorites?')) {
-    return;
-  }
-  
-  console.log('🗑️ Removing favorite ID:', favoriteId);
+  if (!confirm('Are you sure you want to remove this event from your favorites?')) return;
   
   try {
     const response = await fetch(`/api/unlike/${favoriteId}`, {
       method: 'DELETE',
       credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    console.log('📡 Response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Server error:', errorText);
-      throw new Error(`Server returned ${response.status}`);
-    }
-
     const data = await response.json();
-    console.log('✅ Response data:', data);
     
     if (data.success) {
       showToast('✅ Removed from favorites successfully', 'success');
@@ -424,41 +474,21 @@ async function removeFavorite(favoriteId) {
       throw new Error(data.message || 'Failed to remove favorite');
     }
   } catch (error) {
-    console.error('❌ Remove favorite error:', error);
     showToast('❌ Error: ' + error.message, 'error');
   }
 }
 
-// ============================================
-// Cancel Booking - FIXED
-// ============================================
 async function cancelBooking(bookingId) {
-  if (!confirm('Are you sure you want to cancel this booking?')) {
-    return;
-  }
-  
-  console.log('🗑️ Cancelling booking ID:', bookingId);
+  if (!confirm('Are you sure you want to cancel this booking?')) return;
   
   try {
     const response = await fetch(`/api/cancel-booking/${bookingId}`, {
       method: 'DELETE',
       credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    console.log('📡 Response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Server error:', errorText);
-      throw new Error(`Server returned ${response.status}`);
-    }
-
     const data = await response.json();
-    console.log('✅ Response data:', data);
     
     if (data.success) {
       showToast('✅ Booking cancelled successfully', 'success');
@@ -467,14 +497,10 @@ async function cancelBooking(bookingId) {
       throw new Error(data.message || 'Failed to cancel booking');
     }
   } catch (error) {
-    console.error('❌ Cancel booking error:', error);
     showToast('❌ Error: ' + error.message, 'error');
   }
 }
 
-// ============================================
-// Delete Account
-// ============================================
 function confirmDeleteAccount() {
   const confirmed = confirm(
     '⚠️ WARNING: This action cannot be undone!\n\n' +
@@ -484,9 +510,7 @@ function confirmDeleteAccount() {
   
   if (!confirmed) return;
   
-  const doubleConfirm = prompt(
-    'To confirm deletion, please type "DELETE" in capital letters:'
-  );
+  const doubleConfirm = prompt('To confirm deletion, please type "DELETE" in capital letters:');
   
   if (doubleConfirm !== 'DELETE') {
     alert('Account deletion cancelled');
@@ -507,14 +531,10 @@ function confirmDeleteAccount() {
     }
   })
   .catch(err => {
-    console.error('Delete account error:', err);
     alert('Error deleting account');
   });
 }
 
-// ============================================
-// Toast Notification Helper
-// ============================================
 function showToast(message, type = 'success') {
   const existing = document.querySelector('.toast-notification');
   if (existing) existing.remove();
@@ -540,227 +560,18 @@ function showToast(message, type = 'success') {
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     font-weight: bold;
     font-size: 16px;
-    animation: slideInRight 0.3s ease;
+    animation: slideIn 0.3s ease;
   `;
   
   toast.textContent = message;
   document.body.appendChild(toast);
   
   setTimeout(() => {
-    toast.style.animation = 'slideOutRight 0.3s ease';
+    toast.style.animation = 'slideOut 0.3s ease';
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
 
-// Add CSS animations
-if (!document.getElementById('toast-animations')) {
-  const style = document.createElement('style');
-  style.id = 'toast-animations';
-  style.textContent = `
-    @keyframes slideInRight {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOutRight {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(400px); opacity: 0; }
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-// Load data on page load
-window.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('favorites').classList.contains('active')) {
-    loadFavorites();
-  }
-  if (document.getElementById('bookings').classList.contains('active')) {
-    loadBookings();
-  }
-});
-
-// ============================================
-// Remove Favorite - FIXED VERSION
-// ============================================
-async function removeFavorite(favoriteId) {
-  if (!confirm('Are you sure you want to remove this event from your favorites?')) {
-    return;
-  }
-  
-  try {
-    const response = await fetch(`/api/unlike/${favoriteId}`, {
-      method: 'DELETE',
-      credentials: 'same-origin',  // ✅ إضافة credentials
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.success) {
-      // ✅ إظهار رسالة نجاح
-      showSuccessMessage('Removed from favorites successfully');
-      // ✅ إعادة تحميل القائمة
-      await loadFavorites();
-    } else {
-      throw new Error(data.message || 'Failed to remove favorite');
-    }
-  } catch (error) {
-    console.error('Remove favorite error:', error);
-    showErrorMessage('Error removing favorite: ' + error.message);
-  }
-}
-
-// ============================================
-// Cancel Booking - FIXED VERSION
-// ============================================
-async function cancelBooking(bookingId) {
-  if (!confirm('Are you sure you want to cancel this booking?')) {
-    return;
-  }
-  
-  try {
-    const response = await fetch(`/api/cancel-booking/${bookingId}`, {
-      method: 'DELETE',
-      credentials: 'same-origin',  // ✅ إضافة credentials
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.success) {
-      // ✅ إظهار رسالة نجاح
-      showSuccessMessage('Booking cancelled successfully');
-      // ✅ إعادة تحميل القائمة
-      await loadBookings();
-    } else {
-      throw new Error(data.message || 'Failed to cancel booking');
-    }
-  } catch (error) {
-    console.error('Cancel booking error:', error);
-    showErrorMessage('Error cancelling booking: ' + error.message);
-  }
-}
-
-// ============================================
-// Helper Functions للرسائل
-// ============================================
-function showSuccessMessage(message) {
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'message success';
-  messageDiv.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 15px 25px;
-    background: rgba(76,175,80,0.9);
-    color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    animation: slideIn 0.3s ease;
-  `;
-  messageDiv.textContent = message;
-  document.body.appendChild(messageDiv);
-  
-  setTimeout(() => {
-    messageDiv.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => messageDiv.remove(), 300);
-  }, 3000);
-}
-
-function showErrorMessage(message) {
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'message error';
-  messageDiv.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 15px 25px;
-    background: rgba(244,67,54,0.9);
-    color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    animation: slideIn 0.3s ease;
-  `;
-  messageDiv.textContent = message;
-  document.body.appendChild(messageDiv);
-  
-  setTimeout(() => {
-    messageDiv.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => messageDiv.remove(), 300);
-  }, 3000);
-}
-
-// ============================================
-// CSS Animations
-// ============================================
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(400px); opacity: 0; }
-  }
-`;
-document.head.appendChild(style);
-
-
-// ============================================
-// Delete Account
-// ============================================
-function confirmDeleteAccount() {
-  const confirmed = confirm(
-    '⚠️ WARNING: This action cannot be undone!\n\n' +
-    'Are you absolutely sure you want to delete your account?\n' +
-    'All your data, bookings, and favorites will be permanently deleted.'
-  );
-  
-  if (!confirmed) return;
-  
-  const doubleConfirm = prompt(
-    'To confirm deletion, please type "DELETE" in capital letters:'
-  );
-  
-  if (doubleConfirm !== 'DELETE') {
-    alert('Account deletion cancelled');
-    return;
-  }
-  
-  fetch('/api/delete-account', {
-    method: 'DELETE'
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      alert('Your account has been deleted successfully');
-      window.location.href = '/';
-    } else {
-      alert('Error deleting account: ' + data.message);
-    }
-  })
-  .catch(err => {
-    console.error('Delete account error:', err);
-    alert('Error deleting account');
-  });
-}
-
-// Load data on page load
 window.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('favorites').classList.contains('active')) {
     loadFavorites();
@@ -770,24 +581,5 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-
-<!-- CONTACT SECTION -->
-<div class="contact-section">
-  <h2>Need an expert? Leave your info and we'll be in touch shortly</h2>
-  <div class="contact-grid">
-    <div class="contact-box">
-      <h3>VISIT US</h3>
-      <p>Come and visit us at our office and we'll help you with all your needs.<br><br> Alula, Saudi Arabia</p>
-    </div>
-    <div class="contact-box">
-      <h3>CALL US</h3>
-      <p>Feel free to give us a call, we are here to help you.<br><br>+966 55 555 555</p>
-    </div>
-    <div class="contact-box">
-      <h3>CONTACT US</h3>
-      <p>You can also contact us via email or our contact form.<br><br>alula@sa.com</p>
-    </div>
-  </div>
-</div>
 </body>
 </html>
