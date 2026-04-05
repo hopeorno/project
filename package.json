@@ -10,7 +10,6 @@
     "node": "18.x"
   },
   "dependencies": {
-    "better-sqlite3": "^12.8.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
@@ -18,9 +17,10 @@
     "express-session": "^1.18.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7",
-    "shortid": "^2.2.17",
-    "sqlite3": "^6.0.1"
+    "shortid": "^2.2.17"
   },
   "repository": {
     "type": "git",
