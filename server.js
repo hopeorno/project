@@ -21,14 +21,15 @@ app.set('views', path.join(__dirname, 'views'));
 
 // ===== PostgreSQL Session Store =====
 const PgSession = connectPgSimple(session);
+
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 app.use(
     session({
         store: new PgSession({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true
-}),
+            conString: process.env.DATABASE_URL,
+            createTableIfMissing: true
+        }),
         secret: 'Secret333',
         name: 'sessionId',
         resave: false,
@@ -89,9 +90,6 @@ const HegraFeedback = sequelize.define('HegraFeedback', {
     username: DataTypes.STRING,
     comment: DataTypes.TEXT,
 });
-
-// Sync tables
-await sequelize.sync();
 
 // ===== Middleware =====
 app.use((req, res, next) => {
@@ -208,5 +206,21 @@ app.get('/profile', checkLogin, async (req, res) => {
 
 // ===== SERVER =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log('Server running'));
 
+app.listen(PORT, async () => {
+    console.log("Server running on", PORT);
+
+    try {
+        await sequelize.authenticate();
+        console.log("DB connected");
+    } catch (err) {
+        console.error("DB error:", err);
+    }
+
+    try {
+        await sequelize.sync();
+        console.log("Tables synced");
+    } catch (err) {
+        console.error("Sync error:", err);
+    }
+});
