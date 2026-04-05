@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
 import { Sequelize, DataTypes } from 'sequelize';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,8 +19,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// ===== PostgreSQL Session Store =====
+const PgSession = connectPgSimple(session);
+
 app.use(
     session({
+        store: new PgSession({
+            conString: process.env.DATABASE_URL,
+        }),
         secret: 'Secret333',
         name: 'sessionId',
         resave: false,
@@ -199,5 +206,5 @@ app.get('/profile', checkLogin, async (req, res) => {
 
 // ===== SERVER =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => console.log("Server running"));
+app.listen(PORT, '0.0.0.0', () => console.log('Server running'));
 
